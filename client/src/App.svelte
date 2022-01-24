@@ -1,18 +1,30 @@
 <script>
     import axios from "axios";
     import { onMount } from "svelte";
+    import { 
+        transactions, 
+        sortedTransactions, 
+        balance, 
+        income, 
+        expenses 
+    } from "./stores.js";
+    
+    import Transaction from "./components/Transaction.svelte";
+    import SummaryCard from "./components/SummeryCard.svelte";
+    import Loading from "./components/Loading.svelte";
 
     let input = '';
     let typeOfTransaction = "+";
-    let transactions = [];
+    let loading = false;
 
-    $: disabled = !input
-    $: balance = transactions.reduce((acc, t) => acc + t.value , 0)
+    $: disabled = !input;
 
     onMount(async () => {
+        loading = true;
         const { data } = await axios.get("api/transactions");
 
-        transactions = data;
+        $transactions = data;
+        loading = false;
     });
 
     async function addTransaction() {
@@ -23,7 +35,7 @@
 
         const response = await axios.post("api/transactions", transaction);
 
-        transactions = [...transactions, response.data];
+        $transactions = [...$transactions, response.data];
         input = '';
     }
 
@@ -36,7 +48,7 @@
         const response = await axios.delete("/api/transactions/" + id);
 
         if (response.data.id === id) {
-            transactions = transactions.filter(t => t._id !== id)
+            $transactions = $transactions.filter(t => t._id !== id)
         }
     }
 </script>
@@ -58,15 +70,28 @@
             <button class="button" on:click={addTransaction} {disabled}> Сохранить </button>
         </p>
     </div>
-    <div class="notification is-info is-lignt has-text-centered">
-        Баланс: <strong>{balance}</strong>
+    {#if loading}
+    <Loading />
+    {/if}
+
+    {#if $transactions.length > 0}
+    <SummaryCard mode="Баланс" value={$balance} />
+    <div class="columns">
+        <div class="column">
+            <SummaryCard mode="Получение" value={$income} />
+        </div>
+        <div class="column">
+            <SummaryCard mode="Затраты" value={$expenses} />
+        </div>
     </div>
     <hr />
-    {#each transactions as transaction (transaction._id)}
-    <div class="notification is-lignt {transaction.value > 0 ? 'is-success' : 'is-danger'}">
-        {transaction.value}
-        <button class="delete" on:click={() => removeTransaction(transaction._id) } />
+    {:else if !loading}
+    <div class="notification">
+        Добавьте первую транзакцию
     </div>
+    {/if}
+    {#each $sortedTransactions as transaction (transaction._id)}
+    <Transaction {transaction} {removeTransaction} />
     {/each}
 </div>
 

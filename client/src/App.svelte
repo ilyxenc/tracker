@@ -76,7 +76,7 @@
 
     {#if $transactions.length > 0}
     <SummaryCard mode="Баланс" value={$balance} />
-    <div class="columns">
+    <div class="columns-tracker">
         <div class="column">
             <SummaryCard mode="Получение" value={$income} />
         </div>
@@ -99,7 +99,17 @@
 
 <style>
     .app {
-        margin: 40px auto;
         max-width: 500px !important;
+        padding: 20px 10px;
+    }
+    .column {
+        padding: 0 !important;
+        min-width: 200px;
+    }
+
+    .columns-tracker {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
     }
 </style>
